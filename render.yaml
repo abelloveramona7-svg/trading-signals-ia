@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: take-tips-ia-abel
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python take_tips_ia_abel_api.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: PORT
+        value: 10000
+    plan: free
+    branch: main
+    repo: https://github.com/abelloveramona7-svg/trading-signals-ia.git
+    region: oregon
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
