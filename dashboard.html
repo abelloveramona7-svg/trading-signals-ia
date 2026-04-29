@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - TakeTips IA</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0f0d; color: #fff; min-height: 100vh; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; background: rgba(10,15,13,0.95); border-bottom: 1px solid #1a3d2f; position: sticky; top: 0; z-index: 100; }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo img { width: 40px; height: 40px; }
+        .logo span { font-size: 18px; font-weight: bold; color: #00ff88; }
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .credits { background: rgba(0,255,136,0.1); border: 1px solid #00ff88; border-radius: 20px; padding: 5px 15px; font-size: 14px; color: #00ff88; }
+        .user-email { color: #888; font-size: 14px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 25px; }
+        .greeting { margin-bottom: 20px; }
+        .greeting h1 { font-size: 28px; margin-bottom: 10px; }
+        .greeting h1 span { color: #00ff88; }
+        .plan-badge { display: inline-block; background: rgba(0,255,136,0.1); border: 1px solid #00ff88; border-radius: 15px; padding: 5px 15px; font-size: 12px; color: #00ff88; margin-right: 10px; }
+        .upgrade-btn { display: inline-block; background: #00ff88; color: #000; border-radius: 15px; padding: 5px 15px; font-size: 12px; font-weight: bold; text-decoration: none; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: rgba(20,40,30,0.5); border: 1px solid #1a3d2f; border-radius: 12px; padding: 20px; text-align: center; }
+        .stat-card .icon { font-size: 24px; margin-bottom: 10px; }
+        .stat-card .label { color: #888; font-size: 12px; margin-bottom: 5px; }
+        .stat-card .value { font-size: 32px; font-weight: bold; color: #00ff88; }
+        .main-section { background: rgba(20,40,30,0.3); border: 1px solid #1a3d2f; border-radius: 12px; padding: 40px; text-align: center; margin-bottom: 20px; }
+        .main-section .robot { font-size: 48px; margin-bottom: 15px; }
+        .main-section h2 { font-size: 22px; margin-bottom: 10px; }
+        .main-section p { color: #888; margin-bottom: 25px; font-size: 14px; }
+        .analyze-btn { display: inline-block; background: #00ff88; color: #000; border-radius: 25px; padding: 12px 30px; font-size: 16px; font-weight: bold; text-decoration: none; margin-bottom: 10px; }
+        .credits-info { color: #888; font-size: 13px; }
+        .sections-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; }
+        .section-card { background: rgba(20,40,30,0.3); border: 1px solid #1a3d2f; border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 15px; }
+        .section-card .icon { font-size: 32px; }
+        .section-card .content { flex: 1; }
+        .section-card h3 { font-size: 16px; margin-bottom: 5px; }
+        .section-card h3 span { color: #00ff88; }
+        .section-card p { color: #888; font-size: 13px; }
+        .section-card .arrow { color: #00ff88; font-size: 20px; text-decoration: none; }
+        .mt5-section { background: rgba(20,40,30,0.3); border: 1px solid #1a3d2f; border-radius: 12px; padding: 20px; }
+        .mt5-section h3 { font-size: 16px; margin-bottom: 5px; }
+        .mt5-section p { color: #888; font-size: 13px; margin-bottom: 15px; }
+        .mt5-addon { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .mt5-addon img { width: 40px; height: 40px; border-radius: 8px; }
+        .mt5-addon .info h4 { font-size: 16px; margin-bottom: 3px; }
+        .mt5-addon .info p { color: #888; font-size: 13px; }
+        .activate-btn { display: inline-block; background: #00ff88; color: #000; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: bold; text-decoration: none; }
+        .chat-btn { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: #00ff88; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <span>TakeTips IA</span>
+        </div>
+        <div class="user-info">
+            <div class="credits">1 créditos</div>
+            <div class="user-email">pspconta_01@outlook.com</div>
+        </div>
+    </header>
+    <div class="container">
+        <div class="greeting">
+            <h1>Olá, <span>Pspconta_01</span></h1>
+            <span class="plan-badge">PLANO FREE</span>
+            <a href="#" class="upgrade-btn">UPGRADE</a>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="icon">&#128200;</div>
+                <div class="label">TOTAL OPERADO</div>
+                <div class="value">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">&#127919;</div>
+                <div class="label">TAXA DE ACERTO</div>
+                <div class="value">0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">&#128176;</div>
+                <div class="label">LÍQUIDO (RR)</div>
+                <div class="value">0.0</div>
+            </div>
+        </div>
+        <div class="main-section">
+            <div class="robot">&#129302;</div>
+            <h2>Pronto para analisar?</h2>
+            <p>Selecione o ativo e o tempo gráfico para carregar o setup exato na hora: direção, ponto de entrada, take profit e stop loss.</p>
+            <a href="#" class="analyze-btn">Analisar Gráfico Agora</a>
+            <div class="credits-info">1 crédito disponível este mês.</div>
+        </div>
+        <div class="sections-grid">
+            <div class="section-card">
+                <div class="icon">&#127873;</div>
+                <div class="content">
+                    <h3>Indique amigos, <span>ganhe recompensas</span></h3>
+                    <p>Seu amigo ganha +30 créditos bonus e você desbloqueia recompensas de até R$300.</p>
+                </div>
+                <a href="#" class="arrow">&#8594;</a>
+            </div>
+            <div class="section-card">
+                <div class="icon">&#128203;</div>
+                <div class="content">
+                    <h3>Livro de <span>Operações</span></h3>
+                    <p>Reveja todas as suas análises anteriores, resultados e recomendações da IA em um só lugar.</p>
+                </div>
+                <a href="#" class="arrow">&#8594;</a>
+            </div>
+        </div>
+        <div class="mt5-section">
+            <h3>Opere direto da TakeTips IA</h3>
+            <p>Conecte seu MetaTrader 5 e execute trades com 1 clique a partir das análises da IA.</p>
+            <div class="mt5-addon">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/MetaTrader_5_logo.png/120px-MetaTrader_5_logo.png" alt="MT5">
+                <div class="info">
+                    <h4>MT5 Trading Add-on</h4>
+                    <p>R$97/mês — cancele quando quiser</p>
+                </div>
+            </div>
+            <a href="#" class="activate-btn">Ativar MT5 Trading</a>
+        </div>
+    </div>
+    <div class="chat-btn">&#128172;</div>
+</body>
+</html>
