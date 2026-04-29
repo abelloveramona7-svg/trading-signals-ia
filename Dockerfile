@@ -10,4 +10,4 @@ COPY . .
 
 EXPOSE 10000
 
-CMD ["python", "take_tips_ia_abel_api.py"]
+CMD ["python", "app.py"]
