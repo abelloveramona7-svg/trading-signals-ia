@@ -310,6 +310,12 @@ def health_check():
         'developer': 'pspconta_01@outlook.com',
         'timestamp': datetime.utcnow().isoformat(),
         'version': '1.0.0'
+
+            @app.route('/analyze', methods=['GET'])
+def analyze_page():
+    """Página de análise de trading"""
+    return app.open_resource('analyze.html').read().decode(), 200, {'Content-Type': 'text/html'}
+
     })
 
 if __name__ == '__main__':
