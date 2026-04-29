@@ -312,11 +312,9 @@ def health_check():
         'version': '1.0.0'
 
             @app.route('/analyze', methods=['GET'])
-})
 def analyze_page():
     """Página de análise de trading"""
     return app.open_resource('analyze.html').read().decode(), 200, {'Content-Type': 'text/html'}
-
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
