@@ -2,6 +2,7 @@ from flask import Flask, jsonify, render_template_string
 from flask_cors import CORS
 import random
 from datetime import datetime
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -48,7 +49,7 @@ def health():
     return jsonify({'status': 'ok', 'message': 'Trading Signals IA is running'})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000, debug=True)
+    app.run(host='0.0.0.0', port=int(os.getenv('PORT', 10000)), debug=False)
 
 HTML_CONTENT = '''<!DOCTYPE html>
 <html>
