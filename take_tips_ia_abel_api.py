@@ -6,6 +6,7 @@ Desenvolvido para: pspconta_01@outlook.com
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import os
 import requests
 import pandas as pd
 import numpy as np
