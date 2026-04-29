@@ -1,14 +1,14 @@
-from flask import Flask, send_file, jsonify
+from flask import Flask, send_from_directory, jsonify
 from flask_cors import CORS
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.')
 CORS(app)
 
 # Serve the index.html file
 @app.route('/')
 def index():
-    return send_file('index.html', mimetype='text/html')
+    return send_from_directory(os.path.dirname(os.path.abspath(__file__)), 'index.html')
 
 @app.route('/api/v1/health')
 def health():
