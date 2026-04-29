@@ -1,14 +1,14 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 
-app = Flask(__name__)
-CORS(app)
+application = Flask(__name__)
+CORS(application)
 
-@app.route('/')
+@application.route('/')
 def index():
     return "<h1>TakeTips IA - Plataforma de Sinais de Trading</h1><p>Sistema online!</p>", 200
 
-@app.route('/api/v1/health')
+@application.route('/api/v1/health')
 def health():
     return jsonify({
         'developer': 'pspconta_01@outlook.com',
@@ -17,3 +17,5 @@ def health():
         'timestamp': __import__('datetime').datetime.now().isoformat(),
         'version': '1.0.0'
     })
+
+app = application
