@@ -21,20 +21,14 @@ CORS(app)
 def index():
     return app.open_resource('dashboard.html').read().decode(), 200, {'Content-Type': 'text/html'}
 
-# Constantes
 BINANCE_API = "https://fapi.binance.com/fapi/v1"
 ALPACA_API_KEY = "pk_live_7890abcdef1234567890"
 ALPACA_SECRET_KEY = "sk_live_1234567890abcdef7890"
 
-# Funcoes de suporte
 def get_crypto_price(symbol, interval='1h'):
-    """Obtem preco e dados do mercado cripto"""
+    """Get crypto market price and data"""
     url = f"{BINANCE_API}/klines"
-    params = {
-        'symbol': symbol.upper(),
-        'interval': interval,
-        'limit': 100
-    }
+    params = {'symbol': symbol.upper(), 'interval': interval, 'limit': 100}
     try:
         response = requests.get(url, params=params)
         data = response.json()
@@ -46,7 +40,7 @@ def get_crypto_price(symbol, interval='1h'):
         return None
 
 def calculate_indicators(df):
-    """Calcula indicadores tecnicos"""
+    """Calculate technical indicators"""
     if df is None or df.empty:
         return None
     df['sma_20'] = df['close'].rolling(window=20).mean()
@@ -69,7 +63,7 @@ def calculate_indicators(df):
     return df
 
 def find_support_resistance(df):
-    """Identifica niveis de suporte e resistencia"""
+    """Identify support and resistance levels"""
     if df is None or df.empty:
         return [], []
     pivots = []
@@ -81,7 +75,7 @@ def find_support_resistance(df):
     return pivots
 
 def generate_trading_signal(df):
-    """Gera sinal de trading baseado em multiplos indicadores"""
+    """Generate trading signal based on multiple indicators"""
     if df is None or df.empty or len(df) < 50:
         return None
     last = df.iloc[-1]
@@ -92,52 +86,52 @@ def generate_trading_signal(df):
         return None
     if last['rsi'] < 30:
         score += 2
-        signals.append("RSI Sobrevendido (<30)")
+        signals.append("RSI Oversold (<30)")
     elif last['rsi'] > 70:
         score -= 2
-        signals.append("RSI Sobrecomprado (>70)")
+        signals.append("RSI Overbought (>70)")
     if not pd.isna(last.get('macd')) and not pd.isna(last.get('macd_signal')):
         if last['macd'] > last['macd_signal'] and prev['macd'] <= prev['macd_signal']:
             score += 2
-            signals.append("Cruzamento MACD Bullish")
+            signals.append("MACD Bullish Crossover")
         elif last['macd'] < last['macd_signal'] and prev['macd'] >= prev['macd_signal']:
             score -= 2
-            signals.append("Cruzamento MACD Bearish")
+            signals.append("MACD Bearish Crossover")
     if not pd.isna(last.get('bb_lower')):
         if last['close'] < last['bb_lower']:
             score += 1
-            signals.append("Preco abaixo da BB Inferior")
+            signals.append("Price below Lower BB")
         elif last['close'] > last['bb_upper']:
             score -= 1
-            signals.append("Preco acima da BB Superior")
+            signals.append("Price above Upper BB")
     if not pd.isna(last.get('sma_20')) and not pd.isna(last.get('sma_50')):
         if last['close'] > last['sma_20'] > last['sma_50']:
             score += 1
-            signals.append("Tendencia Bullish")
+            signals.append("Bullish Trend")
         elif last['close'] < last['sma_20'] < last['sma_50']:
             score -= 1
-            signals.append("Tendencia Bearish")
+            signals.append("Bearish Trend")
     if score >= 4:
-        action = "COMPRAR"
-        strength = "FORTE"
+        action = "BUY"
+        strength = "STRONG"
     elif score >= 2:
-        action = "COMPRAR"
-        strength = "MODERADO"
+        action = "BUY"
+        strength = "MODERATE"
     elif score <= -4:
-        action = "VENDER"
-        strength = "FORTE"
+        action = "SELL"
+        strength = "STRONG"
     elif score <= -2:
-        action = "VENDER"
-        strength = "MODERADO"
+        action = "SELL"
+        strength = "MODERATE"
     else:
-        action = "NEUTRO"
-        strength = "FRACO"
+        action = "NEUTRAL"
+        strength = "WEAK"
     atr = last.get('atr', 0) if not pd.isna(last.get('atr')) else (last['high'] - last['low']) * 2
-    if action == "COMPRAR":
+    if action == "BUY":
         entry = last['close']
         stop_loss = entry - (atr * 1.5)
         take_profit = entry + (atr * 3)
-    elif action == "VENDER":
+    elif action == "SELL":
         entry = last['close']
         stop_loss = entry + (atr * 1.5)
         take_profit = entry - (atr * 3)
@@ -159,14 +153,10 @@ def generate_trading_signal(df):
     }
 
 def get_crypto_data(symbol='BTCUSDT', interval='1h', limit=100):
-    """Obtem dados de mercado de criptomoedas"""
+    """Get cryptocurrency market data"""
     try:
         url = f"{BINANCE_API}/klines"
-        params = {
-            'symbol': symbol.upper(),
-            'interval': interval,
-            'limit': limit
-        }
+        params = {'symbol': symbol.upper(), 'interval': interval, 'limit': limit}
         response = requests.get(url, params=params, timeout=10)
         if response.status_code == 200:
             data = response.json()
@@ -214,7 +204,7 @@ def get_crypto_data(symbol='BTCUSDT', interval='1h', limit=100):
 
 @app.route('/api/v1/analyze', methods=['GET'])
 def analyze_crypto():
-    """Endpoint para analise de criptomoedas"""
+    """Endpoint for cryptocurrency analysis"""
     symbol = request.args.get('symbol', 'BTCUSDT')
     interval = request.args.get('interval', '1h')
     limit = int(request.args.get('limit', 100))
@@ -223,7 +213,7 @@ def analyze_crypto():
 
 @app.route('/api/v1/market', methods=['GET'])
 def get_market_overview():
-    """Endpoint para visao geral do mercado"""
+    """Endpoint for market overview"""
     symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'ADAUSDT', 'DOGEUSDT', 'SOLUSDT', 'DOTUSDT', 'MATICUSDT', 'LINKUSDT', 'AVAXUSDT']
     results = []
     for symbol in symbols:
@@ -249,7 +239,7 @@ def get_market_overview():
 
 @app.route('/api/v1/health', methods=['GET'])
 def health_check():
-    """Endpoint de saude da API"""
+    """API health check endpoint"""
     return jsonify({
         'status': 'online',
         'service': 'TakeTips IA API',
@@ -260,10 +250,9 @@ def health_check():
 
 @app.route('/analyze', methods=['GET'])
 def analyze_page():
-    """Pagina de analise de trading"""
+    """Trading analysis page"""
     return app.open_resource('analyze.html').read().decode(), 200, {'Content-Type': 'text/html'}
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
-# End of TakeTips IA API
