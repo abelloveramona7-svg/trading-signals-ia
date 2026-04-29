@@ -15,6 +15,24 @@ import yfinance as yf
 import time
 
 app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return '''<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TakeTips IA - Plataforma de Sinais de Trading</title>
+</head>
+<body style="font-family:Arial;background:#1a1a2e;color:#eee;text-align:center;padding:40px;">
+    <h1 style="color:#00d4ff;">TakeTips IA - Plataforma de Sinais de Trading</h1>
+    <p>Sistema online</p>
+    <p>API: /api/v1/health</p>
+</body>
+</html>''', 200
+
+
 CORS(app)
 
 # Constantes
