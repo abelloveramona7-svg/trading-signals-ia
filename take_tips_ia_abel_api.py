@@ -217,7 +217,7 @@ def get_crypto_data(symbol='BTCUSDT', interval='1h', limit=100):
         },
         'signal': signal, 'support_resistance': pivots[-10:] if pivots else [],
         'session': session, 'data_source': 'binance' if df is not None else 'coingecko',
-            'candles': [] if df is None else df.to_dict('records')
+            'candles': [{'timestamp': int(c['timestamp'].timestamp() * 1000) if isinstance(c.get('timestamp'), pd.Timestamp) else int(pd.to_datetime(c.get('timestamp')).timestamp() * 1000), 'open': float(c.get('open', 0)), 'high': float(c.get('high', 0)), 'low': float(c.get('low', 0)), 'close': float(c.get('close', 0)), 'volume': float(c.get('volume', 0))} for c in (df.to_dict('records') if df is not None else [])]
     }
 
 @app.route('/api/v1/analyze', methods=['GET'])
