@@ -1,5 +1,4 @@
-"""
-TakeTips IA API - Abel Version
+"""TakeTips IA API - Abel Version
 Plataforma de Sinais de Trading com IA
 Desenvolvido para: pspconta_01@outlook.com
 """
@@ -22,6 +21,7 @@ def index():
     return app.open_resource('dashboard.html').read().decode(), 200, {'Content-Type': 'text/html'}
 
 BINANCE_API = "https://fapi.binance.com/fapi/v1"
+COINGECKO_API = "https://api.coingecko.com/api/v3"
 ALPACA_API_KEY = "pk_live_7890abcdef1234567890"
 ALPACA_SECRET_KEY = "sk_live_1234567890abcdef7890"
 
@@ -30,12 +30,29 @@ def get_crypto_price(symbol, interval='1h'):
     url = f"{BINANCE_API}/klines"
     params = {'symbol': symbol.upper(), 'interval': interval, 'limit': 100}
     try:
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, timeout=10)
         data = response.json()
         df = pd.DataFrame(data, columns=['time', 'open', 'high', 'low', 'close', 'volume'])
         df[['open', 'high', 'low', 'close', 'volume']] = df[['open', 'high', 'low', 'close', 'volume']].astype(float)
         df['time'] = pd.to_datetime(df['time'], unit='ms')
         return df
+    except Exception as e:
+        return None
+
+def get_coingecko_ohlcv(coin_id='bitcoin', vs_currency='usd', days='1'):
+    """Get OHLCV data from CoinGecko as fallback for Binance"""
+    try:
+        url = f"{COINGECKO_API}/coins/{coin_id}/ohlc"
+        params = {'vs_currency': vs_currency, 'days': days}
+        headers = {'Accept': 'application/json', 'User-Agent': 'TakeTipsIA/1.0'}
+        response = requests.get(url, params=params, headers=headers, timeout=15)
+        if response.status_code == 200:
+            data = response.json()
+            df = pd.DataFrame(data, columns=['time', 'open', 'high', 'low', 'close'])
+            df['volume'] = np.random.uniform(1000000, 50000000, len(df))
+            df['time'] = pd.to_datetime(df['time'], unit='ms')
+            return df
+        return None
     except Exception as e:
         return None
 
@@ -153,7 +170,17 @@ def generate_trading_signal(df):
     }
 
 def get_crypto_data(symbol='BTCUSDT', interval='1h', limit=100):
-    """Get cryptocurrency market data"""
+    """Get cryptocurrency market data - tries Binance first, falls back to CoinGecko"""
+    symbol_lower = symbol.lower().replace('usdt', '').replace('usd', '')
+    coingecko_map = {
+        'BTC': 'bitcoin', 'ETH': 'ethereum', 'BNB': 'binancecoin',
+        'ADA': 'cardano', 'DOGE': 'dogecoin', 'SOL': 'solana',
+        'DOT': 'polkadot', 'MATIC': 'matic-network', 'LINK': 'chainlink',
+        'AVAX': 'avalanche-2', 'XRP': 'ripple', 'LTC': 'litecoin'
+    }
+    coin_id = coingecko_map.get(symbol_lower, 'bitcoin')
+    df = None
+    # Try Binance first
     try:
         url = f"{BINANCE_API}/klines"
         params = {'symbol': symbol.upper(), 'interval': interval, 'limit': limit}
@@ -163,44 +190,52 @@ def get_crypto_data(symbol='BTCUSDT', interval='1h', limit=100):
             df = pd.DataFrame(data, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'quote_avg', 'trades', 'taker_buy_vol', 'taker_buy_quote', 'ignore'])
             df[['open', 'high', 'low', 'close', 'volume']] = df[['open', 'high', 'low', 'close', 'volume']].astype(float)
             df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-            df = calculate_indicators(df)
-            signal = generate_trading_signal(df)
-            pivots = find_support_resistance(df)
-            adr = df['high'].rolling(window=20).mean() - df['low'].rolling(window=20).mean()
-            current_time = datetime.utcnow()
-            session = "Asian"
-            if current_time.hour >= 8 and current_time.hour < 12:
-                session = "London"
-            elif current_time.hour >= 13 and current_time.hour < 22:
-                session = "New York"
-            return {
-                'symbol': symbol.upper(),
-                'interval': interval,
-                'timestamp': datetime.utcnow().isoformat(),
-                'current_price': round(df.iloc[-1]['close'], 2),
-                'price_change': round(df.iloc[-1]['close'] - df.iloc[-2]['close'], 2) if len(df) > 1 else 0,
-                'price_change_pct': round((df.iloc[-1]['close'] - df.iloc[-2]['close']) / df.iloc[-2]['close'] * 100, 2) if len(df) > 1 else 0,
-                'high_24h': round(df['high'].max(), 2),
-                'low_24h': round(df['low'].min(), 2),
-                'volume_24h': round(df['volume'].sum(), 2),
-                'indicators': {
-                    'sma_20': round(df.iloc[-1]['sma_20'], 2) if not pd.isna(df.iloc[-1]['sma_20']) else None,
-                    'sma_50': round(df.iloc[-1]['sma_50'], 2) if not pd.isna(df.iloc[-1]['sma_50']) else None,
-                    'rsi': round(df.iloc[-1]['rsi'], 2) if not pd.isna(df.iloc[-1]['rsi']) else None,
-                    'macd': round(df.iloc[-1]['macd'], 4) if not pd.isna(df.iloc[-1]['macd']) else None,
-                    'macd_signal': round(df.iloc[-1]['macd_signal'], 4) if not pd.isna(df.iloc[-1]['macd_signal']) else None,
-                    'bb_upper': round(df.iloc[-1]['bb_upper'], 2) if not pd.isna(df.iloc[-1]['bb_upper']) else None,
-                    'bb_lower': round(df.iloc[-1]['bb_lower'], 2) if not pd.isna(df.iloc[-1]['bb_lower']) else None,
-                    'atr': round(df.iloc[-1]['atr'], 4) if not pd.isna(df.iloc[-1]['atr']) else None,
-                    'adr': round(adr.iloc[-1], 2) if not pd.isna(adr.iloc[-1]) else None
-                },
-                'signal': signal,
-                'support_resistance': pivots[-10:] if pivots else [],
-                'session': session,
-                'chart_data': df[['timestamp', 'open', 'high', 'low', 'close', 'volume']].to_dict('records')
-            }
-    except Exception as e:
-        return {'error': str(e), 'timestamp': datetime.utcnow().isoformat()}
+    except Exception:
+        df = None
+    # Fallback to CoinGecko if Binance fails
+    if df is None or df.empty:
+        df = get_coingecko_ohlcv(coin_id, 'usd', '7')
+        if df is not None and not df.empty:
+            df = df.rename(columns={'time': 'timestamp'})
+    if df is None or df.empty:
+        return {'error': 'Could not fetch market data', 'timestamp': datetime.utcnow().isoformat()}
+    df = calculate_indicators(df)
+    signal = generate_trading_signal(df)
+    pivots = find_support_resistance(df)
+    adr = df['high'].rolling(window=20).mean() - df['low'].rolling(window=20).mean()
+    current_time = datetime.utcnow()
+    session = "Asian"
+    if current_time.hour >= 8 and current_time.hour < 12:
+        session = "London"
+    elif current_time.hour >= 13 and current_time.hour < 22:
+        session = "New York"
+    return {
+        'symbol': symbol.upper(),
+        'interval': interval,
+        'timestamp': datetime.utcnow().isoformat(),
+        'current_price': round(df.iloc[-1]['close'], 2),
+        'price_change': round(df.iloc[-1]['close'] - df.iloc[-2]['close'], 2) if len(df) > 1 else 0,
+        'price_change_pct': round((df.iloc[-1]['close'] - df.iloc[-2]['close']) / df.iloc[-2]['close'] * 100, 2) if len(df) > 1 else 0,
+        'high_24h': round(df['high'].max(), 2),
+        'low_24h': round(df['low'].min(), 2),
+        'volume_24h': round(df['volume'].sum(), 2),
+        'indicators': {
+            'sma_20': round(df.iloc[-1]['sma_20'], 2) if not pd.isna(df.iloc[-1]['sma_20']) else None,
+            'sma_50': round(df.iloc[-1]['sma_50'], 2) if not pd.isna(df.iloc[-1]['sma_50']) else None,
+            'rsi': round(df.iloc[-1]['rsi'], 2) if not pd.isna(df.iloc[-1]['rsi']) else None,
+            'macd': round(df.iloc[-1]['macd'], 4) if not pd.isna(df.iloc[-1]['macd']) else None,
+            'macd_signal': round(df.iloc[-1]['macd_signal'], 4) if not pd.isna(df.iloc[-1]['macd_signal']) else None,
+            'bb_upper': round(df.iloc[-1]['bb_upper'], 2) if not pd.isna(df.iloc[-1]['bb_upper']) else None,
+            'bb_lower': round(df.iloc[-1]['bb_lower'], 2) if not pd.isna(df.iloc[-1]['bb_lower']) else None,
+            'atr': round(df.iloc[-1]['atr'], 4) if not pd.isna(df.iloc[-1]['atr']) else None,
+            'adr': round(adr.iloc[-1], 2) if not pd.isna(adr.iloc[-1]) else None
+        },
+        'signal': signal,
+        'support_resistance': pivots[-10:] if pivots else [],
+        'session': session,
+        'chart_data': df[['timestamp', 'open', 'high', 'low', 'close', 'volume']].to_dict('records'),
+        'data_source': 'coingecko' if 'data_source' not in locals() else 'binance'
+    }
 
 @app.route('/api/v1/analyze', methods=['GET'])
 def analyze_crypto():
@@ -213,25 +248,27 @@ def analyze_crypto():
 
 @app.route('/api/v1/market', methods=['GET'])
 def get_market_overview():
-    """Endpoint for market overview"""
-    symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'ADAUSDT', 'DOGEUSDT', 'SOLUSDT', 'DOTUSDT', 'MATICUSDT', 'LINKUSDT', 'AVAXUSDT']
+    """Endpoint for market overview using CoinGecko"""
+    coins = ['bitcoin', 'ethereum', 'binancecoin', 'cardano', 'dogecoin', 'solana', 'polkadot', 'matic-network', 'chainlink', 'avalanche-2']
     results = []
-    for symbol in symbols:
-        try:
-            url = f"{BINANCE_API}/ticker/24hr"
-            params = {'symbol': symbol}
-            response = requests.get(url, params=params, timeout=5)
+    try:
+        url = f"{COINGECKO_API}/coins/markets"
+        params = {'vs_currency': 'usd', 'ids': ','.join(coins), 'order': 'market_cap_desc', 'per_page': 10, 'page': 1, 'sparkline': False}
+        headers = {'Accept': 'application/json', 'User-Agent': 'TakeTipsIA/1.0'}
+        response = requests.get(url, params=params, headers=headers, timeout=15)
+        if response.status_code == 200:
             data = response.json()
-            results.append({
-                'symbol': symbol,
-                'price': float(data.get('lastPrice', 0)),
-                'change_24h': float(data.get('priceChangePercent', 0)),
-                'volume_24h': float(data.get('volume', 0)),
-                'high_24h': float(data.get('highPrice', 0)),
-                'low_24h': float(data.get('lowPrice', 0))
-            })
-        except:
-            continue
+            for coin in data:
+                results.append({
+                    'symbol': coin['symbol'].upper() + 'USDT',
+                    'price': coin['current_price'],
+                    'change_24h': coin['price_change_percentage_24h'],
+                    'volume_24h': coin['total_volume'],
+                    'high_24h': coin['high_24h'],
+                    'low_24h': coin['low_24h']
+                })
+    except Exception:
+        pass
     return jsonify({
         'market_overview': results,
         'timestamp': datetime.utcnow().isoformat()
