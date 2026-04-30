@@ -86,9 +86,9 @@ def find_support_resistance(df):
     pivots = []
     for i in range(1, len(df)-1):
         if df.iloc[i]['high'] > df.iloc[i-1]['high'] and df.iloc[i]['high'] > df.iloc[i+1]['high']:
-            pivots.append({'type': 'resistance', 'price': df.iloc[i]['high'], 'time': df.iloc[i]['time']})
+            pivots.append({'type': 'resistance', 'price': df.iloc[i]['high'], 'timestamp': df.iloc[i]['timestamp']})
         elif df.iloc[i]['low'] < df.iloc[i-1]['low'] and df.iloc[i]['low'] < df.iloc[i+1]['low']:
-            pivots.append({'type': 'support', 'price': df.iloc[i]['low'], 'time': df.iloc[i]['time']})
+            pivots.append({'type': 'support', 'price': df.iloc[i]['low'], 'timestamp': df.iloc[i]['timestamp']})
     return pivots
 
 def generate_trading_signal(df):
