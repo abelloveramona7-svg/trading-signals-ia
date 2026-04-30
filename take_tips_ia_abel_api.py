@@ -10,7 +10,6 @@ import requests
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-import yfinance as yf
 import time
 
 app = Flask(__name__)
@@ -26,7 +25,7 @@ ALPACA_API_KEY = "pk_live_7890abcdef1234567890"
 ALPACA_SECRET_KEY = "sk_live_1234567890abcdef7890"
 
 def get_crypto_price(symbol, interval='1h'):
-    """Get crypto market price and data"""
+    """Get crypto market price and data from Binance"""
     url = f"{BINANCE_API}/klines"
     params = {'symbol': symbol.upper(), 'interval': interval, 'limit': 100}
     try:
@@ -36,24 +35,32 @@ def get_crypto_price(symbol, interval='1h'):
         df[['open', 'high', 'low', 'close', 'volume']] = df[['open', 'high', 'low', 'close', 'volume']].astype(float)
         df['time'] = pd.to_datetime(df['time'], unit='ms')
         return df
-    except Exception as e:
+    except Exception:
         return None
 
-def get_coingecko_ohlcv(coin_id='bitcoin', vs_currency='usd', days='1'):
-    """Get OHLCV data from CoinGecko as fallback for Binance"""
+def get_coingecko_market_chart(coin_id='bitcoin', vs_currency='usd', days='7'):
+    """Get price chart from CoinGecko as fallback for Binance"""
     try:
-        url = f"{COINGECKO_API}/coins/{coin_id}/ohlc"
-        params = {'vs_currency': vs_currency, 'days': days}
+        url = f"{COINGECKO_API}/coins/{coin_id}/market_chart/range"
+        now = int(datetime.utcnow().timestamp())
+        start = now - (int(days) * 86400)
         headers = {'Accept': 'application/json', 'User-Agent': 'TakeTipsIA/1.0'}
+        params = {'vs_currency': vs_currency, 'from': start, 'to': now}
         response = requests.get(url, params=params, headers=headers, timeout=15)
         if response.status_code == 200:
             data = response.json()
-            df = pd.DataFrame(data, columns=['time', 'open', 'high', 'low', 'close'])
-            df['volume'] = np.random.uniform(1000000, 50000000, len(df))
-            df['time'] = pd.to_datetime(df['time'], unit='ms')
-            return df
+            prices = data.get('prices', [])
+            if len(prices) >= 2:
+                df = pd.DataFrame(prices, columns=['timestamp', 'close'])
+                df['open'] = df['close'].shift(1)
+                df['high'] = df['close'].rolling(window=3, min_periods=1).max()
+                df['low'] = df['close'].rolling(window=3, min_periods=1).min()
+                df['volume'] = np.random.uniform(1000000, 50000000, len(df))
+                df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+                df = df.dropna().reset_index(drop=True)
+                return df
         return None
-    except Exception as e:
+    except Exception:
         return None
 
 def calculate_indicators(df):
@@ -129,48 +136,32 @@ def generate_trading_signal(df):
             score -= 1
             signals.append("Bearish Trend")
     if score >= 4:
-        action = "BUY"
-        strength = "STRONG"
+        action, strength = "BUY", "STRONG"
     elif score >= 2:
-        action = "BUY"
-        strength = "MODERATE"
+        action, strength = "BUY", "MODERATE"
     elif score <= -4:
-        action = "SELL"
-        strength = "STRONG"
+        action, strength = "SELL", "STRONG"
     elif score <= -2:
-        action = "SELL"
-        strength = "MODERATE"
+        action, strength = "SELL", "MODERATE"
     else:
-        action = "NEUTRAL"
-        strength = "WEAK"
+        action, strength = "NEUTRAL", "WEAK"
     atr = last.get('atr', 0) if not pd.isna(last.get('atr')) else (last['high'] - last['low']) * 2
     if action == "BUY":
-        entry = last['close']
-        stop_loss = entry - (atr * 1.5)
-        take_profit = entry + (atr * 3)
+        entry, stop_loss, take_profit = last['close'], last['close'] - (atr * 1.5), last['close'] + (atr * 3)
     elif action == "SELL":
-        entry = last['close']
-        stop_loss = entry + (atr * 1.5)
-        take_profit = entry - (atr * 3)
+        entry, stop_loss, take_profit = last['close'], last['close'] + (atr * 1.5), last['close'] - (atr * 3)
     else:
-        entry = last['close']
-        stop_loss = entry
-        take_profit = entry
-    risk_reward = abs(take_profit - entry) / abs(entry - stop_loss) if abs(entry - stop_loss) > 0 else 0
+        entry = stop_loss = take_profit = last['close']
+    rr = abs(take_profit - entry) / abs(entry - stop_loss) if abs(entry - stop_loss) > 0 else 0
     return {
-        'action': action,
-        'strength': strength,
-        'score': score,
-        'signals': signals,
-        'entry_price': round(entry, 2),
-        'stop_loss': round(stop_loss, 2),
-        'take_profit': round(take_profit, 2),
-        'risk_reward': round(risk_reward, 2),
+        'action': action, 'strength': strength, 'score': score, 'signals': signals,
+        'entry_price': round(entry, 2), 'stop_loss': round(stop_loss, 2),
+        'take_profit': round(take_profit, 2), 'risk_reward': round(rr, 2),
         'timestamp': datetime.now().isoformat()
     }
 
 def get_crypto_data(symbol='BTCUSDT', interval='1h', limit=100):
-    """Get cryptocurrency market data - tries Binance first, falls back to CoinGecko"""
+    """Get crypto market data - tries Binance first, falls back to CoinGecko"""
     symbol_lower = symbol.lower().replace('usdt', '').replace('usd', '')
     coingecko_map = {
         'BTC': 'bitcoin', 'ETH': 'ethereum', 'BNB': 'binancecoin',
@@ -194,9 +185,7 @@ def get_crypto_data(symbol='BTCUSDT', interval='1h', limit=100):
         df = None
     # Fallback to CoinGecko if Binance fails
     if df is None or df.empty:
-        df = get_coingecko_ohlcv(coin_id, 'usd', '7')
-        if df is not None and not df.empty:
-            df = df.rename(columns={'time': 'timestamp'})
+        df = get_coingecko_market_chart(coin_id, 'usd', '7')
     if df is None or df.empty:
         return {'error': 'Could not fetch market data', 'timestamp': datetime.utcnow().isoformat()}
     df = calculate_indicators(df)
@@ -205,19 +194,15 @@ def get_crypto_data(symbol='BTCUSDT', interval='1h', limit=100):
     adr = df['high'].rolling(window=20).mean() - df['low'].rolling(window=20).mean()
     current_time = datetime.utcnow()
     session = "Asian"
-    if current_time.hour >= 8 and current_time.hour < 12:
-        session = "London"
-    elif current_time.hour >= 13 and current_time.hour < 22:
-        session = "New York"
+    if 8 <= current_time.hour < 12: session = "London"
+    elif 13 <= current_time.hour < 22: session = "New York"
     return {
-        'symbol': symbol.upper(),
-        'interval': interval,
+        'symbol': symbol.upper(), 'interval': interval,
         'timestamp': datetime.utcnow().isoformat(),
         'current_price': round(df.iloc[-1]['close'], 2),
         'price_change': round(df.iloc[-1]['close'] - df.iloc[-2]['close'], 2) if len(df) > 1 else 0,
         'price_change_pct': round((df.iloc[-1]['close'] - df.iloc[-2]['close']) / df.iloc[-2]['close'] * 100, 2) if len(df) > 1 else 0,
-        'high_24h': round(df['high'].max(), 2),
-        'low_24h': round(df['low'].min(), 2),
+        'high_24h': round(df['high'].max(), 2), 'low_24h': round(df['low'].min(), 2),
         'volume_24h': round(df['volume'].sum(), 2),
         'indicators': {
             'sma_20': round(df.iloc[-1]['sma_20'], 2) if not pd.isna(df.iloc[-1]['sma_20']) else None,
@@ -230,11 +215,8 @@ def get_crypto_data(symbol='BTCUSDT', interval='1h', limit=100):
             'atr': round(df.iloc[-1]['atr'], 4) if not pd.isna(df.iloc[-1]['atr']) else None,
             'adr': round(adr.iloc[-1], 2) if not pd.isna(adr.iloc[-1]) else None
         },
-        'signal': signal,
-        'support_resistance': pivots[-10:] if pivots else [],
-        'session': session,
-        'chart_data': df[['timestamp', 'open', 'high', 'low', 'close', 'volume']].to_dict('records'),
-        'data_source': 'coingecko' if 'data_source' not in locals() else 'binance'
+        'signal': signal, 'support_resistance': pivots[-10:] if pivots else [],
+        'session': session, 'data_source': 'binance' if df is not None else 'coingecko'
     }
 
 @app.route('/api/v1/analyze', methods=['GET'])
@@ -253,7 +235,7 @@ def get_market_overview():
     results = []
     try:
         url = f"{COINGECKO_API}/coins/markets"
-        params = {'vs_currency': 'usd', 'ids': ','.join(coins), 'order': 'market_cap_desc', 'per_page': 10, 'page': 1, 'sparkline': False}
+        params = {'vs_currency': 'usd', 'ids': ','.join(coins), 'order': 'market_cap_desc', 'per_page': 10, 'sparkline': False}
         headers = {'Accept': 'application/json', 'User-Agent': 'TakeTipsIA/1.0'}
         response = requests.get(url, params=params, headers=headers, timeout=15)
         if response.status_code == 200:
@@ -269,10 +251,7 @@ def get_market_overview():
                 })
     except Exception:
         pass
-    return jsonify({
-        'market_overview': results,
-        'timestamp': datetime.utcnow().isoformat()
-    })
+    return jsonify({'market_overview': results, 'timestamp': datetime.utcnow().isoformat()})
 
 @app.route('/api/v1/health', methods=['GET'])
 def health_check():
