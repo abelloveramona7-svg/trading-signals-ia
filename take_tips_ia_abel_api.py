@@ -216,7 +216,8 @@ def get_crypto_data(symbol='BTCUSDT', interval='1h', limit=100):
             'adr': round(adr.iloc[-1], 2) if not pd.isna(adr.iloc[-1]) else None
         },
         'signal': signal, 'support_resistance': pivots[-10:] if pivots else [],
-        'session': session, 'data_source': 'binance' if df is not None else 'coingecko'
+        'session': session, 'data_source': 'binance' if df is not None else 'coingecko',
+            'candles': [] if df is None else df.to_dict('records')
     }
 
 @app.route('/api/v1/analyze', methods=['GET'])
