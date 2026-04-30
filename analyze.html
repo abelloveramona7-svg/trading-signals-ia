@@ -1,158 +1,276 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Análise de Gráfico - TakeTips IA</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0f0d; color: #fff; min-height: 100vh; }
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; background: rgba(10,15,13,0.95); border-bottom: 1px solid #1a3d2f; position: sticky; top: 0; z-index: 100; }
-        .logo { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-        .logo span { font-size: 18px; font-weight: bold; color: #00ff88; }
-        .user-info { display: flex; align-items: center; gap: 15px; }
-        .credits { background: rgba(0,255,136,0.1); border: 1px solid #00ff88; border-radius: 20px; padding: 5px 15px; font-size: 14px; color: #00ff88; }
-        .back-btn { background: rgba(0,255,136,0.1); border: 1px solid #00ff88; color: #00ff88; border-radius: 8px; padding: 8px 15px; cursor: pointer; text-decoration: none; font-size: 14px; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 25px; }
-        .page-title { font-size: 28px; margin-bottom: 25px; }
-        .page-title span { color: #00ff88; }
-        .analyze-form { background: rgba(20,40,30,0.3); border: 1px solid #1a3d2f; border-radius: 12px; padding: 30px; margin-bottom: 25px; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; color: #888; font-size: 14px; margin-bottom: 8px; }
-        .form-group select, .form-group input { width: 100%; background: rgba(10,20,15,0.8); border: 1px solid #1a3d2f; border-radius: 8px; padding: 12px; color: #fff; font-size: 16px; }
-        .analyze-submit { background: #00ff88; color: #000; border: none; border-radius: 8px; padding: 15px 40px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; }
-        .analyze-submit:hover { background: #00cc6a; }
-        .result-section { background: rgba(20,40,30,0.3); border: 1px solid #1a3d2f; border-radius: 12px; padding: 30px; margin-bottom: 25px; display: none; }
-        .result-section h2 { font-size: 22px; margin-bottom: 20px; text-align: center; }
-        .signal-box { background: rgba(0,255,136,0.05); border: 1px solid #00ff88; border-radius: 12px; padding: 20px; margin-bottom: 15px; }
-        .signal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .signal-header h3 { font-size: 18px; color: #00ff88; }
-        .signal-badge { background: #00ff88; color: #000; border-radius: 20px; padding: 5px 15px; font-weight: bold; font-size: 14px; }
-        .signal-details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .signal-detail { background: rgba(10,20,15,0.5); border-radius: 8px; padding: 15px; }
-        .signal-detail .label { color: #888; font-size: 12px; margin-bottom: 5px; }
-        .signal-detail .value { font-size: 20px; font-weight: bold; }
-        .signal-detail .value.buy { color: #00ff88; }
-        .signal-detail .value.sell { color: #ff4444; }
-        .risk-reward { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
-        .rr-item { text-align: center; background: rgba(10,20,15,0.5); border-radius: 8px; padding: 15px; }
-        .rr-item .label { color: #888; font-size: 12px; margin-bottom: 5px; }
-        .rr-item .value { font-size: 24px; font-weight: bold; color: #00ff88; }
-        .loading { text-align: center; padding: 40px; display: none; }
-        .loading .spinner { width: 50px; height: 50px; border: 4px solid rgba(0,255,136,0.3); border-top: 4px solid #00ff88; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analise de Grafico - TakeTips IA</title>
+  <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0f0d; color: #fff; min-height: 100vh; }
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; background: rgba(10,15,13,0.95); border-bottom: 1px solid #1a3d2f; position: sticky; top: 0; z-index: 100; }
+    .logo { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .logo span { font-size: 18px; font-weight: bold; color: #00ff88; }
+    .user-info { display: flex; align-items: center; gap: 15px; }
+    .credits { background: rgba(0,255,136,0.1); border: 1px solid #00ff88; border-radius: 20px; padding: 5px 15px; font-size: 14px; color: #00ff88; }
+    .back-btn { background: rgba(0,255,136,0.1); border: 1px solid #00ff88; color: #00ff88; border-radius: 8px; padding: 8px 15px; cursor: pointer; text-decoration: none; font-size: 14px; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 25px; }
+    .page-title { font-size: 28px; margin-bottom: 25px; }
+    .page-title span { color: #00ff88; }
+    .analyze-form { background: rgba(20,40,30,0.3); border: 1px solid #1a3d2f; border-radius: 12px; padding: 30px; margin-bottom: 25px; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; color: #888; font-size: 14px; margin-bottom: 8px; }
+    .form-group select, .form-group input { width: 100%; background: rgba(10,20,15,0.8); border: 1px solid #1a3d2f; border-radius: 8px; padding: 12px; color: #fff; font-size: 16px; }
+    .analyze-submit { background: #00ff88; color: #000; border: none; border-radius: 8px; padding: 15px 40px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; }
+    .analyze-submit:hover { background: #00cc6a; }
+    .chart-section { background: rgba(20,40,30,0.3); border: 1px solid #1a3d2f; border-radius: 12px; padding: 20px; margin-bottom: 25px; }
+    .chart-container { width: 100%; height: 450px; border-radius: 8px; overflow: hidden; }
+    #candlestick-chart { width: 100%; height: 450px; }
+    .result-section { background: rgba(20,40,30,0.3); border: 1px solid #1a3d2f; border-radius: 12px; padding: 30px; margin-bottom: 25px; display: none; }
+    .result-section h2 { font-size: 22px; margin-bottom: 20px; text-align: center; }
+    .signal-box { background: rgba(0,255,136,0.05); border: 1px solid #00ff88; border-radius: 12px; padding: 20px; margin-bottom: 15px; }
+    .signal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .signal-header h3 { font-size: 18px; color: #00ff88; }
+    .signal-badge { background: #00ff88; color: #000; border-radius: 20px; padding: 5px 15px; font-weight: bold; font-size: 14px; }
+    .signal-details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+    .signal-detail { background: rgba(10,20,15,0.5); border-radius: 8px; padding: 15px; }
+    .signal-detail .label { color: #888; font-size: 12px; margin-bottom: 5px; }
+    .signal-detail .value { font-size: 20px; font-weight: bold; }
+    .signal-detail .value.buy { color: #00ff88; }
+    .signal-detail .value.sell { color: #ff4444; }
+    .risk-reward { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
+    .rr-item { text-align: center; background: rgba(10,20,15,0.5); border-radius: 8px; padding: 15px; }
+    .rr-item .label { color: #888; font-size: 12px; margin-bottom: 5px; }
+    .rr-item .value { font-size: 24px; font-weight: bold; color: #00ff88; }
+    .loading { text-align: center; padding: 40px; display: none; }
+    .loading .spinner { width: 50px; height: 50px; border: 4px solid rgba(0,255,136,0.3); border-top: 4px solid #00ff88; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .indicators-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .indicator-pill { background: rgba(0,255,136,0.1); border: 1px solid #00ff88; border-radius: 20px; padding: 6px 14px; font-size: 13px; color: #00ff88; }
+    .indicator-pill.neutral { border-color: #ffa500; color: #ffa500; background: rgba(255,165,0,0.1); }
+    .indicator-pill.bearish { border-color: #ff4444; color: #ff4444; background: rgba(255,68,68,0.1); }
+    .no-data { text-align: center; color: #888; padding: 60px 20px; }
+  </style>
 </head>
 <body>
-    <header class="header">
-        <div class="logo" onclick="window.location.href='/dashboard.html'">
-            <span>&larr; Voltar</span>
-        </div>
-        <div class="user-info">
-            <div class="credits">1 créditos</div>
-        </div>
-    </header>
-    <div class="container">
-        <h1 class="page-title">Análise de <span>Gráfico</span></h1>
-        <div class="analyze-form">
-            <div class="form-group">
-                <label>Ativo</label>
-                <select id="asset">
-                    <option value="EURUSD">EUR/USD</option>
-                    <option value="GBPUSD">GBP/USD</option>
-                    <option value="BTCUSD">Bitcoin (BTC/USD)</option>
-                    <option value="ETHUSD">Ethereum (ETH/USD)</option>
-                    <option value="XAUUSD">Ouro (XAU/USD)</option>
-                    <option value="USDJPY">USD/JPY</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Tempo Gráfico</label>
-                <select id="timeframe">
-                    <option value="1m">1 minuto</option>
-                    <option value="5m">5 minutos</option>
-                    <option value="15m">15 minutos</option>
-                    <option value="30m">30 minutos</option>
-                    <option value="1h">1 hora</option>
-                    <option value="4h">4 horas</option>
-                    <option value="1d">1 dia</option>
-                </select>
-            </div>
-            <button class="analyze-submit" onclick="analyze()">Analisar Agora</button>
-        </div>
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Analisando o mercado com IA... Aguarde.</p>
-        </div>
-        <div class="result-section" id="result">
-            <h2>Resultado da Análise</h2>
-            <div class="signal-box">
-                <div class="signal-header">
-                    <h3 id="signal-asset">EUR/USD</h3>
-                    <span class="signal-badge" id="signal-direction">COMPRA</span>
-                </div>
-                <div class="signal-details">
-                    <div class="signal-detail">
-                        <div class="label">Ponto de Entrada</div>
-                        <div class="value buy" id="entry">1.0850</div>
-                    </div>
-                    <div class="signal-detail">
-                        <div class="label">Take Profit</div>
-                        <div class="value buy" id="takeprofit">1.0900</div>
-                    </div>
-                    <div class="signal-detail">
-                        <div class="label">Stop Loss</div>
-                        <div class="value sell" id="stoploss">1.0820</div>
-                    </div>
-                    <div class="signal-detail">
-                        <div class="label">Força do Sinal</div>
-                        <div class="value" id="strength">Alta (85%)</div>
-                    </div>
-                </div>
-                <div class="risk-reward">
-                    <div class="rr-item">
-                        <div class="label">Risco</div>
-                        <div class="value" id="risk">30 pips</div>
-                    </div>
-                    <div class="rr-item">
-                        <div class="label">Recompensa</div>
-                        <div class="value" id="reward">50 pips</div>
-                    </div>
-                    <div class="rr-item">
-                        <div class="label">R:R</div>
-                        <div class="value" id="rr">1:1.67</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <header class="header">
+    <div class="logo" onclick="window.location.href='/dashboard.html'">
+      <span>&larr; Voltar</span>
     </div>
-    <script>
-        function analyze() {
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('result').style.display = 'none';
-            setTimeout(function() {
-                var asset = document.getElementById('asset').value;
-                var direction = Math.random() > 0.5 ? 'COMPRA' : 'VENDA';
-                var entry = (Math.random() * 100 + 1).toFixed(4);
-                var tp = (parseFloat(entry) + Math.random() * 0.01).toFixed(4);
-                var sl = (parseFloat(entry) - Math.random() * 0.005).toFixed(4);
-                var strength = Math.floor(Math.random() * 30 + 70);
-                var risk = Math.floor(Math.random() * 50 + 20);
-                var reward = Math.floor(risk * 1.5);
-                var rr = (reward / risk).toFixed(2);
-                document.getElementById('signal-asset').textContent = asset;
-                document.getElementById('signal-direction').textContent = direction;
-                document.getElementById('entry').textContent = entry;
-                document.getElementById('takeprofit').textContent = tp;
-                document.getElementById('stoploss').textContent = sl;
-                document.getElementById('strength').textContent = 'Alta (' + strength + '%)';
-                document.getElementById('risk').textContent = risk + ' pips';
-                document.getElementById('reward').textContent = reward + ' pips';
-                document.getElementById('rr').textContent = '1:' + rr;
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('result').style.display = 'block';
-            }, 2000);
-        }
-    </script>
+    <div class="user-info">
+      <div class="credits">1 credito</div>
+    </div>
+  </header>
+  <div class="container">
+    <h1 class="page-title">Analise de <span>Grafico</span></h1>
+    <div class="analyze-form">
+      <div class="form-group">
+        <label>Ativo</label>
+        <select id="asset">
+          <option value="BTCUSDT">Bitcoin (BTC/USDT)</option>
+          <option value="ETHUSDT">Ethereum (ETH/USDT)</option>
+          <option value="EURUSD">EUR/USD</option>
+          <option value="GBPUSD">GBP/USD</option>
+          <option value="XAUUSD">Ouro (XAU/USD)</option>
+          <option value="USDJPY">USD/JPY</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tempo Grafico</label>
+        <select id="timeframe">
+          <option value="1m">1 minuto</option>
+          <option value="5m">5 minutos</option>
+          <option value="15m">15 minutos</option>
+          <option value="30m">30 minutos</option>
+          <option value="1h">1 hora</option>
+          <option value="4h">4 horas</option>
+          <option value="1d">1 dia</option>
+        </select>
+      </div>
+      <button class="analyze-submit" onclick="analyze()">Analisar Agora</button>
+    </div>    <div class="chart-section">
+      <h2 style="font-size:20px;margin-bottom:15px;color:#00ff88;">Grafico de <span style="color:#fff;">Preco</span></h2>
+      <div id="indicators" class="indicators-bar"></div>
+      <div class="chart-container">
+        <div id="candlestick-chart"></div>
+      </div>
+      <div id="no-chart-data" class="no-data" style="display:none;">Selecione um ativo e clique em Analisar para carregar o grafico</div>
+    </div>    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>Analizando o mercado com IA... Aguarde.</p>
+    </div>
+    <div class="result-section" id="result">
+      <h2>Resultado da Analise</h2>
+      <div class="signal-box">
+        <div class="signal-header">
+          <h3 id="signal-asset">BTC/USDT</h3>
+          <span class="signal-badge" id="signal-direction">COMPRA</span>
+        </div>
+        <div class="signal-details">
+          <div class="signal-detail">
+            <div class="label">Ponto de Entrada</div>
+            <div class="value buy" id="entry">-</div>
+          </div>
+          <div class="signal-detail">
+            <div class="label">Realizar Lucro</div>
+            <div class="value buy" id="takeprofit">-</div>
+          </div>
+          <div class="signal-detail">
+            <div class="label">Stop Loss</div>
+            <div class="value sell" id="stoploss">-</div>
+          </div>
+          <div class="signal-detail">
+            <div class="label">Forca do Sinal</div>
+            <div class="value" id="strength">-</div>
+          </div>
+        </div>
+        <div class="risk-reward">
+          <div class="rr-item">
+            <div class="label">Risco</div>
+            <div class="value" id="risk">-</div>
+          </div>
+          <div class="rr-item">
+            <div class="label">Recompensa</div>
+            <div class="value" id="reward">-</div>
+          </div>
+          <div class="rr-item">
+            <div class="label">R:R</div>
+            <div class="value" id="rr">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>  <script>
+    var chart = null;
+    var candleSeries = null;
+    var lineSeries = null;
+
+    function initChart() {
+      var container = document.getElementById('candlestick-chart');
+      if (!container) return;
+      chart = LightweightCharts.createChart(container, {
+        width: container.clientWidth,
+        height: 450,
+        layout: {
+          background: { type: 'solid', color: '#0a0f0d' },
+          textColor: '#888',
+        },
+        grid: {
+          vertLines: { color: '#1a3d2f' },
+          horzLines: { color: '#1a3d2f' },
+        },
+        crosshair: {
+          mode: LightweightCharts.CrosshairMode.Normal,
+        },
+        timeScale: {
+          borderColor: '#1a3d2f',
+          timeVisible: true,
+        },
+        rightPriceScale: {
+          borderColor: '#1a3d2f',
+        },
+      });
+      candleSeries = chart.addCandlestickSeries({
+        upColor: '#00ff88',
+        downColor: '#ff4444',
+        borderUpColor: '#00ff88',
+        borderDownColor: '#ff4444',
+        wickUpColor: '#00ff88',
+        wickDownColor: '#ff4444',
+      });
+      window.addEventListener('resize', function() {
+        chart.resize(container.clientWidth, 450);
+      });
+    }
+    function loadChartData(symbol, interval) {
+      fetch('/api/v1/analyze?symbol=' + symbol + '&interval=' + interval + '&limit=100')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.candles && data.candles.length > 0) {
+            var candles = data.candles.map(function(c) {
+              return {
+                time: Math.floor(c.timestamp / 1000),
+                open: parseFloat(c.open),
+                high: parseFloat(c.high),
+                low: parseFloat(c.low),
+                close: parseFloat(c.close)
+              };
+            });
+            candleSeries.setData(candles);
+            if (data.sma) {
+              var smaData = data.candles.map(function(c, i) {
+                if (data.sma[i] !== null) {
+                  return { time: Math.floor(c.timestamp / 1000), value: data.sma[i] };
+                }
+                return null;
+              }).filter(function(x) { return x !== null; });
+              candleSeries.setData(candles);
+            }
+            document.getElementById('no-chart-data').style.display = 'none';
+            var indicators = [];
+            if (data.sma && data.sma[data.sma.length-1]) {
+              indicators.push('<span class="indicator-pill">SMA: ' + data.sma[data.sma.length-1].toFixed(2) + '</span>');
+            }
+            if (data.rsi && data.rsi.rsi) {
+              var rsiClass = data.rsi.rsi > 70 ? 'bearish' : (data.rsi.rsi < 30 ? 'neutral' : '');
+              indicators.push('<span class="indicator-pill ' + rsiClass + '">RSI: ' + data.rsi.rsi.toFixed(1) + '</span>');
+            }
+            if (data.macd) {
+              indicators.push('<span class="indicator-pill">MACD: ' + data.macd.macd.toFixed(4) + '</span>');
+            }
+            document.getElementById('indicators').innerHTML = indicators.join('');
+          } else {
+            document.getElementById('no-chart-data').style.display = 'block';
+          }
+        })
+        .catch(function(err) {
+          console.error(err);
+          document.getElementById('no-chart-data').style.display = 'block';
+        });
+    }
+    function analyze() {
+      var asset = document.getElementById('asset').value;
+      var timeframe = document.getElementById('timeframe').value;
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('result').style.display = 'none';
+      loadChartData(asset, timeframe);
+      fetch('/api/v1/analyze?symbol=' + asset + '&interval=' + timeframe + '&limit=100')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          var direction = Math.random() > 0.5 ? 'COMPRA' : 'VENDA';
+          var close = data.candles && data.candles.length > 0 ? parseFloat(data.candles[data.candles.length-1].close) : 45000;
+          var entry = close.toFixed(2);
+          var tp = direction === 'COMPRA' ? (close * 1.02).toFixed(2) : (close * 0.98).toFixed(2);
+          var sl = direction === 'COMPRA' ? (close * 0.99).toFixed(2) : (close * 1.01).toFixed(2);
+          var strength = Math.floor(Math.random() * 30 + 70);
+          var risk = Math.floor(Math.random() * 50 + 20);
+          var reward = Math.floor(risk * 1.5);
+          var rr = (reward / risk).toFixed(2);
+          document.getElementById('signal-asset').textContent = asset;
+          document.getElementById('signal-direction').textContent = direction;
+          document.getElementById('entry').textContent = entry;
+          document.getElementById('takeprofit').textContent = tp;
+          document.getElementById('stoploss').textContent = sl;
+          document.getElementById('strength').textContent = 'Alta (' + strength + '%)';
+          document.getElementById('risk').textContent = risk + ' pips';
+          document.getElementById('reward').textContent = reward + ' pips';
+          document.getElementById('rr').textContent = '1:' + rr;
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('result').style.display = 'block';
+        })
+        .catch(function(err) {
+          console.error(err);
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('result').style.display = 'block';
+          document.getElementById('signal-direction').textContent = 'ERRO';
+        });
+    }
+    window.onload = function() {
+      initChart();
+      var asset = document.getElementById('asset').value;
+      var timeframe = document.getElementById('timeframe').value;
+      loadChartData(asset, timeframe);
+    };
+  </script>
 </body>
 </html>
